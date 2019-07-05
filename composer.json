@@ -1,0 +1,26 @@
+{
+  "name": "zver/async",
+  "description": "async tasks runner",
+  "minimum-stability": "stable",
+  "config": {
+    "optimize-autoloader": true
+  },
+  "autoload": {
+    "psr-4": {
+      "": "src/"
+    },
+    "files": [
+      "src/Functions.php"
+    ]
+  },
+  "autoload-dev": {
+    "psr-4": {
+      "": "tests/"
+    }
+  },
+  "require": {
+    "spatie/async": "^1.0"
+  },
+  "require-dev": {
+  }
+}
