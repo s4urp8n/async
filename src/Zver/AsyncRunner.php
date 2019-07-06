@@ -13,49 +13,81 @@ use Spatie\Async\Pool;
 
 class AsyncRunner
 {
-    protected $queue;
+
+    protected const TASK_CALLBACK = 'CALLBACK';
+    protected const TASK_SUCCESS  = 'SUCCCESS';
+    protected const TASK_FAIL     = 'FAIL';
+
+    protected $runnedAtTimestamp = false;
+
+    protected $queue = [];
+
     protected $pool;
-    protected $concurrency = 20;//max threads at same time
-    protected $concurrencyTimeout;// do not run new thread before that timeout reached
 
-    public static function create($checkRequirements = true)
+    protected $concurrency = 20;
+
+    protected $concurrencyTimeout;
+
+    public function __construct(int $taskRunPauseSeconds = 0, int $maxTaskAtSameTime = 20, int $killTaskAfterSeconds = 0)
     {
-        if ($checkRequirements && !Pool::isSupported()) {
-            throw new Exception('Async run is not supported, required extensions pcntl and posix');
+        if (!Pool::isSupported()) {
+            throw new Exception('Async run is not supported, required extensions PCNTL and POSIX');
         }
-        return new static();
-    }
-
-    protected function __construct()
-    {
-        $this->queue = [];
-        $this->pool = Pool::create();
+        $this->concurrencyTimeout = $taskRunPauseSeconds;
+        $this->pool = Pool::create()
+                          ->concurrency($maxTaskAtSameTime)
+                          ->timeout($killTaskAfterSeconds);
     }
 
     public function addTask(callable $callback, callable $onSuccess, callable $onError)
     {
-        if (is_null($this->concurrencyTimeout)) {
-            throw new Exception('Set concurency timeout first');
+        $this->queue[] = [
+            static::TASK_CALLBACK => $callback,
+            static::TASK_SUCCESS  => $onSuccess,
+            static::TASK_FAIL     => $onError,
+        ];
+        return $this;
+    }
+
+    protected function isQueueEmpty(): bool
+    {
+        return count($this->queue) == 0;
+    }
+
+    protected function addTasksFromQueue()
+    {
+        foreach ($this->queue as $index => $task) {
+            if ($this->isTimeToRunTask($index)) {
+                $this->pool->add($task[static::TASK_CALLBACK])
+                           ->then($task[static::TASK_SUCCESS])
+                           ->catch($task[static::TASK_FAIL]);
+            }
         }
-
-        $this->queue[] = [$callback, $onSuccess, $onError];
-        return $this;
     }
 
-    public function run()
+    protected function isTimeToRunTask($taskIndex): bool
     {
-        $this->pool->wait();
+        $taskRunOffset = $taskIndex * $this->concurrencyTimeout;
+        $runTime = $this->runnedAtTimestamp + $taskRunOffset;
+        return time() >= $runTime;
     }
 
-    public function setConcurrency(int $concurrency)
+    protected function run()
     {
-        $this->concurrency = $concurrency;
-        return $this;
+        while (!$this->isQueueEmpty()) {
+            $this->addTasksFromQueue();
+            $this->pool->wait();
+        }
     }
 
-    public function getConcurrency()
+    public function runAndWait()
     {
-        return $this->concurrency;
+        //runner can be runner once!
+        if ($this->runnedAtTimestamp) {
+            throw new Exception('Runner already executed');
+        }
+        $this->runnedAtTimestamp = time();
+        $this->run();
     }
 
 }
