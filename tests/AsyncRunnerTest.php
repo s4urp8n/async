@@ -34,9 +34,9 @@ class AsyncRunnerTest extends PHPUnit\Framework\TestCase
         $runner->runAndWait();
     }
 
-    protected function getSyncResultIds()
+    protected function getSyncResultIds(int $count)
     {
-        return [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
+        return array_slice([0, 1, 2, 3, 4, 5, 6, 7, 8, 9], 0, $count);
     }
 
     public function testRunQueueWithoutTimeout()
@@ -53,28 +53,25 @@ class AsyncRunnerTest extends PHPUnit\Framework\TestCase
                 $ids = array_map(function (AsyncRunnerTestTask $task) {
                     return $task->getId();
                 }, $results);
-                $this->assertTrue(count($results) == 10);
-                $this->assertNotEquals($ids, $this->getSyncResultIds());
+                $this->assertSame(count($results), $count);
+                $this->assertNotEquals($ids, $this->getSyncResultIds($count));
             }, 6);
     }
 
     public function testRunQueueWithTimeout()
     {
-        $this->assertDurationLessThenOrEquals(
-            function () {
-                $count = 3;
-                $runner = new AsyncRunner(1);
-                for ($i = 0; $i < $count; $i++) {
-                    $runner->addTask(new AsyncRunnerTestTask($i));
-                }
-                $results = $runner->runAndWait();
-                $this->assertNotEmpty($results);
-                $ids = array_map(function (AsyncRunnerTestTask $task) {
-                    return $task->getId();
-                }, $results);
-                $this->assertTrue(count($results) == 10);
-                $this->assertNotEquals($ids, $this->getSyncResultIds());
-            }, 18);
+        $count = 10;
+        $runner = new AsyncRunner(1);
+        for ($i = 0; $i < $count; $i++) {
+            $runner->addTask(new AsyncRunnerTestTask($i));
+        }
+        $results = $runner->runAndWait();
+        $this->assertNotEmpty($results);
+        $ids = array_map(function (AsyncRunnerTestTask $task) {
+            return $task->getId();
+        }, $results);
+        $this->assertSame(count($results), $count);
+        $this->assertNotEquals($ids, $this->getSyncResultIds($count));
     }
 
     public function testRunQueueWithTimeoutGreaterExecutionTime()//sync simulation
@@ -89,8 +86,8 @@ class AsyncRunnerTest extends PHPUnit\Framework\TestCase
         $ids = array_map(function (AsyncRunnerTestTask $task) {
             return $task->getId();
         }, $results);
-        $this->assertTrue(count($results) == 10);
-        $this->assertEquals($ids, $this->getSyncResultIds());
+        $this->assertSame(count($results), $count);
+        $this->assertEquals($ids, $this->getSyncResultIds($count));
     }
 
 }

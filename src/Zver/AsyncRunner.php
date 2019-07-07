@@ -88,7 +88,9 @@ class AsyncRunner
     {
         while (!$this->isQueueEmpty()) {
             $this->addTasksFromQueue();
-            $this->results = array_merge($this->results, $this->pool->wait());
+            foreach ($this->pool->wait() as $result) {
+                $this->results[] = $result;
+            }
         }
         return $this->results;
     }
