@@ -53,6 +53,7 @@ class AsyncRunnerTest extends PHPUnit\Framework\TestCase
                 $ids = array_map(function (AsyncRunnerTestTask $task) {
                     return $task->getId();
                 }, $results);
+                $this->assertTrue(count($results) == 10);
                 $this->assertNotEquals($ids, $this->getSyncResultIds());
             }, 6);
     }
@@ -71,6 +72,7 @@ class AsyncRunnerTest extends PHPUnit\Framework\TestCase
                 $ids = array_map(function (AsyncRunnerTestTask $task) {
                     return $task->getId();
                 }, $results);
+                $this->assertTrue(count($results) == 10);
                 $this->assertNotEquals($ids, $this->getSyncResultIds());
             }, 18);
     }
@@ -87,6 +89,7 @@ class AsyncRunnerTest extends PHPUnit\Framework\TestCase
         $ids = array_map(function (AsyncRunnerTestTask $task) {
             return $task->getId();
         }, $results);
+        $this->assertTrue(count($results) == 10);
         $this->assertEquals($ids, $this->getSyncResultIds());
     }
 
