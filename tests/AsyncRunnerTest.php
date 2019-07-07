@@ -1,6 +1,7 @@
 <?php
 
 use Zver\AsyncRunner;
+use Zver\AsyncRunnerTestTask;
 
 class AsyncRunnerTest extends PHPUnit\Framework\TestCase
 {
@@ -17,6 +18,14 @@ class AsyncRunnerTest extends PHPUnit\Framework\TestCase
         $this->assertTrue(true);
     }
 
+    public function assertDurationLessThenOrEquals($callback, $duration)
+    {
+        $runnedAt = time();
+        $callback();
+        $callbackDuration = round(time() - $runnedAt, 2);
+        $this->assertTrue($duration >= $callbackDuration);
+    }
+
     public function testRunTwice()
     {
         $this->expectException('Exception');
@@ -25,109 +34,60 @@ class AsyncRunnerTest extends PHPUnit\Framework\TestCase
         $runner->runAndWait();
     }
 
+    protected function getSyncResultIds()
+    {
+        return [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
+    }
+
     public function testRunQueueWithoutTimeout()
     {
-        $runner = new AsyncRunner();
-        for ($i = 0; $i < 10; $i++) {
-
-            $callback = function () use ($i) {
-                $n = rand(1, 5);
-                sleep($n);
-                return $i;
-            };
-
-            $success = function ($result) {
-                return $result;
-            };
-
-            $failed = function (Throwable $e) {
-                throw $e;
-            };
-
-            $timeout = function () use ($i) {
-
-            };
-
-            $runner->addTask($callback, $success, $failed, $timeout);
-        }
-        $syncExecutionResult = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
-        $results = $runner->runAndWait();
-        $this->assertNotEmpty($results);
-        $this->assertNotEquals($results, $syncExecutionResult);
-        $this->assertTrue(count($results) == 10);
-        foreach ($syncExecutionResult as $value) {
-            $this->assertTrue(in_array($value, $results));
-        }
+        $this->assertDurationLessThenOrEquals(
+            function () {
+                $count = 10;
+                $runner = new AsyncRunner();
+                for ($i = 0; $i < $count; $i++) {
+                    $runner->addTask(new AsyncRunnerTestTask($i));
+                }
+                $results = $runner->runAndWait();
+                $this->assertNotEmpty($results);
+                $ids = array_map(function (AsyncRunnerTestTask $task) {
+                    return $task->getId();
+                }, $results);
+                $this->assertNotEquals($ids, $this->getSyncResultIds());
+            }, 6);
     }
 
-    public function testRunQueueWithRunTimeout()
+    public function testRunQueueWithTimeout()
     {
-        $runner = new AsyncRunner(2);
-        for ($i = 0; $i < 10; $i++) {
-
-            $callback = function () use ($i) {
-                $n = rand(1, 5);
-                sleep($n);
-                return $i;
-            };
-
-            $success = function ($result) {
-                return $result;
-            };
-
-            $failed = function (Throwable $e) {
-                throw $e;
-            };
-
-            $timeout = function () use ($i) {
-
-            };
-
-            $runner->addTask($callback, $success, $failed, $timeout);
-        }
-        $syncExecutionResult = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
-        $results = $runner->runAndWait();
-        $this->assertNotEmpty($results);
-        $this->assertNotEquals($results, $syncExecutionResult);
-        $this->assertTrue(count($results) == 10);
-        foreach ($syncExecutionResult as $value) {
-            $this->assertTrue(in_array($value, $results));
-        }
+        $this->assertDurationLessThenOrEquals(
+            function () {
+                $count = 3;
+                $runner = new AsyncRunner(1);
+                for ($i = 0; $i < $count; $i++) {
+                    $runner->addTask(new AsyncRunnerTestTask($i));
+                }
+                $results = $runner->runAndWait();
+                $this->assertNotEmpty($results);
+                $ids = array_map(function (AsyncRunnerTestTask $task) {
+                    return $task->getId();
+                }, $results);
+                $this->assertNotEquals($ids, $this->getSyncResultIds());
+            }, 18);
     }
 
-    public function testRunQueueWithRunTimeoutIsReal()
+    public function testRunQueueWithTimeoutGreaterExecutionTime()//sync simulation
     {
-        $runner = new AsyncRunner(10); //sync simulation to check timeout to run realy executed
-        for ($i = 0; $i < 10; $i++) {
-
-            $callback = function () use ($i) {
-                $n = rand(1, 5);
-                sleep($n);
-                return $i;
-            };
-
-            $success = function ($result) {
-                return $result;
-            };
-
-            $failed = function (Throwable $e) {
-                throw $e;
-            };
-
-            $timeout = function () use ($i) {
-
-            };
-
-            $runner->addTask($callback, $success, $failed, $timeout);
+        $count = 5;
+        $runner = new AsyncRunner(7);
+        for ($i = 0; $i < $count; $i++) {
+            $runner->addTask(new AsyncRunnerTestTask($i));
         }
-        $syncExecutionResult = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
         $results = $runner->runAndWait();
         $this->assertNotEmpty($results);
-        $this->assertEquals($results, $syncExecutionResult);
-        $this->assertTrue(count($results) == 10);
-        foreach ($syncExecutionResult as $value) {
-            $this->assertTrue(in_array($value, $results));
-        }
+        $ids = array_map(function (AsyncRunnerTestTask $task) {
+            return $task->getId();
+        }, $results);
+        $this->assertEquals($ids, $this->getSyncResultIds());
     }
 
 }

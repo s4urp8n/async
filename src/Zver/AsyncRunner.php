@@ -14,24 +14,15 @@ use Spatie\Async\Pool;
 class AsyncRunner
 {
 
-    protected const TASK_CALLBACK = 'CALLBACK';
-    protected const TASK_SUCCESS  = 'SUCCCESS';
-    protected const TASK_FAIL     = 'FAIL';
-    protected const TASK_TIMEOUT  = 'TIMEOUT';
-
     protected $runnedAtTimestamp = false;
     protected $results           = [];
     protected $taskTimeout       = 0;
-
-    protected $queue = [];
-
+    protected $queue             = [];
     /**
      * @var Pool $pool
      */
     protected $pool;
-
     protected $concurrency;
-
     protected $concurrencyTimeout;
 
     public function __construct(int $taskRunPauseSeconds = 0, int $maxTaskAtSameTime = 20, int $killTaskAfterSeconds = 3600)
@@ -51,14 +42,9 @@ class AsyncRunner
                           ->timeout($this->taskTimeout);
     }
 
-    public function addTask(callable $callback, callable $onSuccess, callable $onError, callable $onTimeout)
+    public function addTask(AsyncTask $task)
     {
-        $this->queue[] = [
-            static::TASK_CALLBACK => $callback,
-            static::TASK_SUCCESS  => $onSuccess,
-            static::TASK_FAIL     => $onError,
-            static::TASK_TIMEOUT  => $onTimeout,
-        ];
+        $this->queue[] = $task;
         return $this;
     }
 
@@ -80,10 +66,7 @@ class AsyncRunner
                 continue;
             }
             if ($this->isTimeToRunTask($index)) {
-                $this->pool->add($task[static::TASK_CALLBACK])
-                           ->then($task[static::TASK_SUCCESS])
-                           ->catch($task[static::TASK_FAIL])
-                           ->timeout($task[static::TASK_TIMEOUT]);
+                $this->pool->add($task);
                 $this->unsetTask($index);
             }
         }
@@ -107,6 +90,7 @@ class AsyncRunner
             $this->addTasksFromQueue();
             $this->results = array_merge($this->results, $this->pool->wait());
         }
+        return $this->results;
     }
 
     public function runAndWait()
@@ -116,8 +100,7 @@ class AsyncRunner
             throw new Exception('Runner already executed');
         }
         $this->runnedAtTimestamp = time();
-        $this->run();
-        return $this->results;
+        return $this->run();
     }
 
 }
