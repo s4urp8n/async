@@ -78,7 +78,7 @@ class AsyncRunnerTest extends PHPUnit\Framework\TestCase
     public function testRunQueueWithTimeoutGreaterExecutionTime()//sync simulation
     {
         $count = 5;
-        $runner = new AsyncRunner(7);
+        $runner = new AsyncRunner(10);
         for ($i = 0; $i < $count; $i++) {
             $runner->addTask(new AsyncRunnerTestTask($i));
         }
