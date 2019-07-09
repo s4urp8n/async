@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/s4urp8n/async.svg?branch=master)](https://travis-ci.org/s4urp8n/async)
+
 # async
 
 ```
