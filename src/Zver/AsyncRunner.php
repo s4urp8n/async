@@ -25,9 +25,9 @@ class AsyncRunner
     protected $concurrency;
     protected $concurrencyTimeout;
 
-    public function __construct(int $taskRunPauseSeconds = 0, int $maxTaskAtSameTime = 20, int $killTaskAfterSeconds = 3600)
+    public function __construct(int $taskRunPauseSeconds = 0, int $maxTaskAtSameTime = 20, int $killTaskAfterSeconds = 3600, bool $checkRequirements = true)
     {
-        if (!Pool::isSupported()) {
+        if ($checkRequirements && !Pool::isSupported()) {
             throw new Exception('Async run is not supported, required extensions PCNTL and POSIX');
         }
         $this->taskTimeout = $killTaskAfterSeconds;
