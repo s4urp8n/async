@@ -141,6 +141,11 @@ class AsyncRunner
         $this->initRuntime();
     }
 
+    public function isRunned()
+    {
+        return !is_null($this->runnedAtTimestamp);
+    }
+
     public function iterate()
     {
         if (is_null($this->pool)) {
