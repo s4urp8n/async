@@ -40,4 +40,9 @@ class AsyncPool extends Pool
 
         usleep($this->sleepTime);
     }
+
+    public function getResults()
+    {
+        return $this->results;
+    }
 }
