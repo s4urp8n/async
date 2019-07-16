@@ -74,6 +74,30 @@ class AsyncRunnerTest extends PHPUnit\Framework\TestCase
         $this->assertNotEquals($ids, $this->getSyncResultIds($count));
     }
 
+    public function testRunInManualMode()
+    {
+        $count = 10;
+        $runner = new AsyncRunner(1);
+        for ($i = 0; $i < $count; $i++) {
+            $runner->addTask(new AsyncRunnerTestTask($i));
+        }
+
+        //manual run and iterate
+        $runner->run();
+        while (!$runner->isCompleted()) {
+            $runner->iterate();
+        }
+
+        $results = $runner->getResults();
+
+        $this->assertNotEmpty($results);
+        $ids = array_map(function (AsyncRunnerTestTask $task) {
+            return $task->getId();
+        }, $results);
+        $this->assertSame(count($results), $count);
+        $this->assertNotEquals($ids, $this->getSyncResultIds($count));
+    }
+
     public function testRunQueueWithTimeoutGreaterExecutionTime()//sync simulation
     {
         $count = 5;
