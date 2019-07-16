@@ -143,7 +143,7 @@ class AsyncRunner
 
     public function isRunned()
     {
-        return !is_null($this->runnedAtTimestamp);
+        return !is_numeric($this->runnedAtTimestamp);
     }
 
     public function iterate()
