@@ -109,25 +109,56 @@ class AsyncRunner
         return time() >= $runTime;
     }
 
-    /**
-     * @return array
-     * @throws \Exception
-     */
-    public function runAndWait(callable $intermediateCallback = null)
+    protected function initRuntime()
     {
         //runner can be runner once!
         if ($this->runnedAtTimestamp) {
             throw new Exception('Runner already executed');
         }
         $this->runnedAtTimestamp = time();
+    }
+
+    /**
+     * @return array
+     * @throws \Exception
+     */
+    public function runAndWait()
+    {
+        $this->initRuntime();
 
         while (!$this->isQueueEmpty()) {
             $this->addTasksFromQueue();
-            foreach ($this->pool->wait($intermediateCallback) as $result) {
+            foreach ($this->pool->wait() as $result) {
                 $this->results[] = $result;
             }
             usleep(100);
         }
+        return $this->results;
+    }
+
+    public function run()
+    {
+        $this->initRuntime();
+    }
+
+    public function iterate()
+    {
+        if ($this->pool->isEmpty()) {
+            foreach ($this->pool->getResults() as $result) {
+                $this->results[] = $result;
+            }
+            $this->addTasksFromQueue();
+        }
+        $this->pool->iterate();
+    }
+
+    public function isCompleted()
+    {
+        return $this->isQueueEmpty() && $this->pool->isEmpty();
+    }
+
+    public function getResults()
+    {
         return $this->results;
     }
 
