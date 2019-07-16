@@ -8,6 +8,10 @@
 
 namespace Zver;
 
+/**
+ * Class AsyncRunnerTestTask
+ * @package Zver
+ */
 class AsyncRunnerTestTask extends AsyncTask
 {
     protected $id;
@@ -18,11 +22,18 @@ class AsyncRunnerTestTask extends AsyncTask
 
     }
 
+    /**
+     * AsyncRunnerTestTask constructor.
+     * @param int $id
+     */
     public function __construct(int $id)
     {
         $this->id = $id;
     }
 
+    /**
+     * @return $this|void
+     */
     public function run()
     {
         $n = rand(1, 5);
@@ -31,11 +42,17 @@ class AsyncRunnerTestTask extends AsyncTask
         return $this;
     }
 
+    /**
+     * @return mixed
+     */
     public function getN()
     {
         return $this->n;
     }
 
+    /**
+     * @return int
+     */
     public function getId()
     {
         return $this->id;

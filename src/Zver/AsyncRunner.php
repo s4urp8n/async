@@ -11,6 +11,10 @@ namespace Zver;
 use Exception;
 use Spatie\Async\Pool;
 
+/**
+ * Class AsyncRunner
+ * @package Zver
+ */
 class AsyncRunner
 {
 
@@ -25,6 +29,14 @@ class AsyncRunner
     protected $concurrency;
     protected $concurrencyTimeout;
 
+    /**
+     * AsyncRunner constructor.
+     * @param int $taskRunPauseSeconds
+     * @param int $maxTaskAtSameTime
+     * @param int $killTaskAfterSeconds
+     * @param bool $checkRequirements
+     * @throws \Exception
+     */
     public function __construct(int $taskRunPauseSeconds = 0, int $maxTaskAtSameTime = 20, int $killTaskAfterSeconds = 3600, bool $checkRequirements = true)
     {
         if ($checkRequirements && !Pool::isSupported()) {
@@ -42,12 +54,19 @@ class AsyncRunner
                           ->timeout($this->taskTimeout);
     }
 
+    /**
+     * @param \Zver\AsyncTask $task
+     * @return $this
+     */
     public function addTask(AsyncTask $task)
     {
         $this->queue[] = $task;
         return $this;
     }
 
+    /**
+     * @return bool
+     */
     protected function isQueueEmpty(): bool
     {
         foreach ($this->queue as $value) {
@@ -72,11 +91,18 @@ class AsyncRunner
         }
     }
 
+    /**
+     * @param $index
+     */
     protected function unsetTask($index)
     {
         $this->queue[$index] = null;
     }
 
+    /**
+     * @param $taskIndex
+     * @return bool
+     */
     protected function isTimeToRunTask($taskIndex): bool
     {
         $taskRunOffset = $taskIndex * $this->concurrencyTimeout;
@@ -84,6 +110,23 @@ class AsyncRunner
         return time() >= $runTime;
     }
 
+    /**
+     * @return array
+     * @throws \Exception
+     */
+    public function runAndWait()
+    {
+        //runner can be runner once!
+        if ($this->runnedAtTimestamp) {
+            throw new Exception('Runner already executed');
+        }
+        $this->runnedAtTimestamp = time();
+        return $this->run();
+    }
+
+    /**
+     * @return array
+     */
     protected function run()
     {
         while (!$this->isQueueEmpty()) {
@@ -93,16 +136,6 @@ class AsyncRunner
             }
         }
         return $this->results;
-    }
-
-    public function runAndWait()
-    {
-        //runner can be runner once!
-        if ($this->runnedAtTimestamp) {
-            throw new Exception('Runner already executed');
-        }
-        $this->runnedAtTimestamp = time();
-        return $this->run();
     }
 
 }

@@ -11,6 +11,10 @@ namespace Zver;
 use Exception;
 use Spatie\Async\Task;
 
+/**
+ * Class AsyncTask
+ * @package Zver
+ */
 class AsyncTask extends Task
 {
     public function configure()
