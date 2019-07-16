@@ -87,7 +87,6 @@ class AsyncRunnerTest extends PHPUnit\Framework\TestCase
         while (!$runner->isCompleted()) {
             $runner->iterate();
         }
-
         $results = $runner->getResults();
 
         $this->assertNotEmpty($results);

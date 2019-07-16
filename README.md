@@ -9,8 +9,16 @@ for ($i = 0; $i < $count; $i++) {
     //add some task class
     $runner->addTask(new AsyncRunnerTestTask($i));
 }
+
 //wait for results
 $results = $runner->runAndWait();
+
+//or run in manual mode
+$runner->run();
+while (!$runner->isCompleted()) {
+    $runner->iterate();
+}
+$results = $runner->getResults();
 ```
 
 ## constructor
