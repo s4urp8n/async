@@ -9,7 +9,6 @@
 namespace Zver;
 
 use Exception;
-use Spatie\Async\Pool;
 
 /**
  * Class AsyncRunner
@@ -23,7 +22,7 @@ class AsyncRunner
     protected $taskTimeout       = 0;
     protected $queue             = [];
     /**
-     * @var Pool $pool
+     * @var \Zver\AsyncPool $pool
      */
     protected $pool;
     protected $concurrency;
@@ -39,7 +38,7 @@ class AsyncRunner
      */
     public function __construct(int $taskRunPauseSeconds = 0, int $maxTaskAtSameTime = 20, int $killTaskAfterSeconds = 3600, bool $checkRequirements = true)
     {
-        if ($checkRequirements && !Pool::isSupported()) {
+        if ($checkRequirements && !AsyncPool::isSupported()) {
             throw new Exception('Async run is not supported, required extensions PCNTL and POSIX');
         }
         $this->taskTimeout = $killTaskAfterSeconds;
@@ -49,9 +48,9 @@ class AsyncRunner
 
     protected function createPool()
     {
-        $this->pool = Pool::create()
-                          ->concurrency($this->concurrency)
-                          ->timeout($this->taskTimeout);
+        $this->pool = AsyncPool::create()
+                               ->concurrency($this->concurrency)
+                               ->timeout($this->taskTimeout);
     }
 
     /**
