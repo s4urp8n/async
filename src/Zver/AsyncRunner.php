@@ -143,12 +143,17 @@ class AsyncRunner
 
     public function iterate()
     {
+        if (is_null($this->pool)) {
+            $this->addTasksFromQueue();
+        }
+
         if ($this->pool->isEmpty()) {
             foreach ($this->pool->getResults() as $result) {
                 $this->results[] = $result;
             }
             $this->addTasksFromQueue();
         }
+
         $this->pool->iterate();
     }
 
